@@ -1,0 +1,204 @@
+  Notes:
+
+SCOPES:
+One of the most fundamental parts of Angular is scopes. Scopes hold your Models (that's your data), they cooperate with your Controllers, and they give the Views everything they need (that's what the user sees and interacts with). Angular scopes operate in a very similar way to the common JavaScript concept of scope.
+The first scope we'll need is the application scope, this is exactly what you'd expect it to be: that's the scope your Angular application can operate in. We set this up in our HTML using the ng-app attribute.
+
+CONTROLLER:
+The second scope is ng-controller; this will determine where our controller can operate. We can have multiple controllers within our application. Each controller will have its own scope. For example, we may have an inbox.html file, containing the below code. It will give responsibility to a controller named 'InboxCtrl' (in our JavaScript) for this scope.
+
+NGVIEW AND ROUTES
+Another important building block that can connect certain URLs of our application to scopes is the ng-view directive. 
+
+MODULES
+Every app needs a module, and Angular provides us with a namespacing capability for this using angular.module(). The method both sets and gets depending how you use it. To create (set) a new module we do this:
+angular.module('myApp', []);
+Notice the empty array, this is where we could put any other named modules as dependencies. Here we tell angular we're creating the module named 'myApp' with no dependencies.
+To get a reference to a module, for registering controllers, factories, filters, etc… we drop the array and just call the module by name:
+angular.module('myApp');
+
+ROUTING
+The next logical step is to configure our routing, which controls which views are injected into the app based on which URL we're hitting. For example when we're at /inbox, we'll want to inject the inbox.html view and assign a Controller. We can use Angular's $routeProvider for this.
+This is where the real fun begins!
+
+NG-ROUTE MODULE
+you'll need to include its cdn to load its module. This file will give us access to an additional module named ngRoute, which we need to include (set as a dependency) in our own module:
+
+var app = angular.module('app', [
+   'ngRoute'
+]);
+
+CONFIG STAGE
+We saw before how to bind a Controller to the DOM (or to a specific view, to put it another way), which is just one way of doing it. Angular allows you to dynamically assign a Controller through the $routeProvider service, which is much more flexible. From now on let's use this instead of using ng-controller="" to declare Controllers.
+
+Angular modules each have a .config() function, we give this a callback that is run before most other function callbacks in Angular. This is where we must configure our routes (the different URLs visitors will be able to access).
+
+app.config(function () {/*...*/});
+
+DEPENDENCY INJECTION
+We'll need to use the $routeProvider to setup our routes inside the config callback; this is made possible via some magic inside the Angular framework (using function definitions and regex). We can simply accept $routeProvider as an argument to the config function and Angular will understand that we've asked for it.
+app.config(function ($routeProvider) {
+   /* Now we can use the routeProvider! :D */
+});
+
+CONFIGURING STATES
+The $routeProvider is really declarative and easy to use, we just declare what view template to use when the URL is pointing to a particular path. Working hand in hand with the ng-view attribute we previously set in our index.html, these template files will now be injected for the described routes.
+Our app will have an inbox view, and a single view for injecting the clicked on Email into.
+The first view will be injected at /inbox, and the second will be inbox/email/:id. You'll notice the second route has :id at the end - this is a dynamic view. It means that an object with an id as a property (with a value) will be used in the URL, which makes all views dynamic. We'll then use this to make a server call to get the email that corresponds with the id.
+If you look closely, you'll notice each view has a particular Controller. Later versions of Angular (we're using one of the latest) ship with a new Controller syntax, the "Controller as" syntax, which instantiates the Controller like an Object and binds it to the current scope under a namespace. The namespace we've chosen for InboxCtrl is inbox.
+
+CONTROLLERS: CONNECTING THE MODEL AND THE VIEW
+Controllers are the middleman between the Model and the View, they drive the Model and View changes. Imagine that the controller is given some html from the route and a javascript object from the dependency injection; with these two things, the controller will tell the view (the html) what it can do by giving it scope variables and maybe a few functions.
+
+A good controller should only be used for two things: Binding the Model to the View (initializing the View) and adding helper functions to the View.
+
+If you go through the Angular documentation examples (available at AngularJS.org) you'll notice Model data being declared in the Controller. While this is okay for examples, the Controller easily becomes the Model as well - which is very bad for many reasons:
+-All the pieces start to get more coupled together
+-More difficult to share business logic
+-Makes things difficult to test
+Remember: A good Controller will have as little logic in it as possible.
+
+Each controller has access to a $scope and some html. $scope is the most documented way of adding properties and methods to our view. Remember how we said each 'ng-controller' attribute specifies a scope of HTML to manage? Well, that scope has access to the same $scope as the Controller function.
+
+FACTORIES
+Angular Factories can be used for many different things. Some of the most common use-cases are server-side communication via HTTP and abstracting Models to persist application state and changes across controllers. Angular Factories are a great way to create reusable features and code blocks throughout our application.
+
+Key takeaway: If you want to communicate with a RESTful API, do it through a factory! If you want to store a 'CurrentUser' with authentication information, do it in a factory!
+
+You can create a factory using the angular.factory() method like so:
+
+app.factory('ExampleFactory', function ExampleFactory($rootScope, $http, $location) {
+   return function myReusableFunction() {
+      // do something fancy
+   };
+});
+
+It's often good practice to create an exports Object inside your Factories and return it. This helps with explicit internal naming which helps you see which methods / variables are private or not (closures ftw).
+In this app, we'll need to get our messages, so let's create a function to do that. Angular uses the $http service to communicate with the server, so we'll inject it:
+
+app.factory('InboxFactory', function InboxFactory ($http) {
+   var exports = {};
+
+   exports.getMessages = function () {
+      return $http.get('json/emails.json')
+         .error(function (data) {
+            console.log('There was an error!', data);
+      });
+   };
+
+   return exports;
+});
+
+$http
+This will use $http to make a GET request to our "json/emails.json" file; here we also set a default error handler for the http request by chaining a method onto the promise returned by $http.get(). Yes that's right, $http() returns a promise! So we can use all of the Angular promise API, the same as we would use a $q.defer().promise object, with a few extras: namely error(fn) and success(fn). success(fn) and error(fn) are two "sugar" methods that are very similar to then(fn) and catch(fn) but specific to $http. Don't worry if this goes a little over your head- we'll go into promises more in the next section!
+
+PROMISES: CONNECTING OUR CONTROLLER AND FACTORY TOGETHER
+Promises are very important inside Angular, they allow you to organize functions that take a long time to do things (e.g. HTTP requests). Promises in Angular are implemented with $q. The $q implementation was inspired by Kris Kowal's Q.
+
+This is how promises work:
+"Do something when this HTTP request — or another function that takes a long time to complete — has finished"
+"If it all goes well, please do the success function I give to .then()"
+"If it goes wrong, please do the catch function I give to .then()"
+Sample code:
+var deferred = $q.defer();
+   deferred.promise.then(
+      function whenThingsGoSunny(){},
+      function whenThingsDontGoSoSunny(){}
+   )
+
+Notice that the first function we pass is the success function and the second one is the error function.
+
+As we just saw, $q allows you to use .then() to include a success and an error function. When using $http, you can do something very similar (but without the .then():
+
+$http({method: 'GET', url: '/someUrl'})
+   .success(function(data, status, headers, config) {
+      // this callback will be called asynchronously
+      // when the response is available
+   })
+   .error(function(data, status, headers, config) {
+      // called asynchronously if an error occurs
+      // or server returns response with an error status.
+   });
+
+HOOKING UP THE FACTORY AND THE CONTROLLER
+We've got some basic email data instide a Factory setup, and a Controller, so let's connect the two:
+
+app.controller('InboxCtrl', function($scope, InboxFactory) {
+   InboxFactory.getMessages()
+      .success(function(jsonData, statusCode) {
+         console.log('The request was successful!', statusCode, jsonData);
+         // Now add the Email messages to the controller's scope
+         $scope.emails = jsonData;
+   });
+});
+
+See how the InboxFactory factory is available as an injectable in our controller? That's dependency injection helping us out again!
+
+We then call the getMessages method on the factory and using the $http()'s success method ($http() was returned from getMessages()), we can then add the list of emails / messages to our controller's $scope and use it in the view. i.e. The success(fn) is available from chaining when we do http() or http.get(), etc…
+
+RENDERING OUR VIEWS
+These templates are an essential aspect to Angular as we can not only make the mappings of data that you've seen already, but we can also introduce custom elements completely! In Angular these are called directives and come with their own templates (either in another html file or a string, the same as how controllers operate).
+
+DIRECTIVES OVERVIEW: CUSTOM HTML ELEMENTS
+In our View file we might have something like this:
+<div id="someview">
+   {{ data.scopePropertyAsUsual }}
+   <my-custom-element></my-custom-element>
+</div>
+Where the <my-custom-element> above will be injected with our directive template and logic. Here's what the basic directive structure might look like:
+
+app.directive('myCustomElement', function myCustomElement() {
+   return {
+      restrict: 'EA',
+      replace: true,
+      scope: true,
+
+      template: [
+         "<div>",
+         "  <h1>My Custom Element's Heading</h1>",
+         "  <p>Some content here!</p>",
+         "  <pre>{{ ctrl.expression | json }}</pre>,"
+         "</div>"
+      ].join(""),
+
+      controllerAs: 'ctrl',
+      controller: function ($scope) {
+         this.expression = {
+            property: "Example"
+         }
+      },
+      link: function (scope, element, attrs) {}
+   }
+});
+
+As you can see the name of the directive is camelCased (myCustomElement) whereas the html element is hyphen-separated (<my-custom-element></my-custom-element>). This is an angular convention for directive naming.
+
+Next, we return a JavaScript Object with various properties on it to describe how the directive works. Here's a quick run through of what some of the Directive properties mean (feel free to skim through this):
+
+restrict: allows you to restrict how the element is declared, E = Element, A = Attribute, there are other ways of declaring (such as a comment) but I wouldn't recommend them as they're not that friendly with older browsers.
+replace: replaces the Directive's root element, in this case would be <inbox></inbox>.
+scope: tells Angular to use an isolated or inherited scope, these concepts are quite tricky to grasp, but setting to true inherits the parent scope and keeps sibling directives more independent, which makes things easier to work with. There are cases where isolated scopes (scope: {}) are the better choice depending on what we're doing.
+template: I've recently used an [].join('') style for templating, it's much cleaner to work with and we can start the first line of the template on a new line, rather than having a huge indent.
+templateUrl: the same as template, but will point to a template file such as tmpl/inbox-directive.html instead of being a string.
+controllerAs: creates a namespace for our Controller when instantiated
+controller: inject dependencies and bind logic, you may also expose an API for other directives to interact with this one through the 'controllerAs' and this of the controller.
+link: a place to write non-Angular logic, but tie it in with Angular. You'll have access to the current scope, the template element root (first element in template ather than Directive root) and the attributes on the element declared.
+
+BUILT IN DIRECTIVES: NG-SHOW, NG-REPEAT, NG-CLICK
+Our Directives will evaluate based on data. For example ng-show="someData" will evaluate when the value of someData is true. If the value is false, it will hide the element.
+
+One of the most powerful Angular Directives is ng-repeat, which iterates over Objects (or items) in an Array:
+<ul>
+   <li ng-repeat="item in items">
+      {{ item.name }}
+   </li>
+</ul>
+
+----------------------
+Screenshot Annotations:
+
+1: you can instantiate ng-app by simply adding the directive itself. 
+
+----------------------
+TO REVIEW, BECAUSE THEY DID NOT COVER
+the actual template htmls, the behavior in the html, the factorys, and everything associated with Emails. 
