@@ -50,7 +50,7 @@ More fleshed out File Structure
 
 Set up your directive's controller and link it to the templateUrl
 
-![picture alt](/img/12SettingUpDirectivesTemplateHtml.png)
+![picture alt](/img/11SettingUpDirectivesTemplateHtml.png)
 
 set up your directive's template html.
 
@@ -63,6 +63,6 @@ Another directive example for the email view. not that angular.bind() is used to
 
 $location.path changes the url and redirects you to that page
 
-![picture alt](/img/15RouteParamsGivesAcessToUrlParams.png)
+![picture alt](/img/15RouteParamsGivesAccessToUrlParams.png)
 
 $routeParams gives us access to what's after the colon in your url.
