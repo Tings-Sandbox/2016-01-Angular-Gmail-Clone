@@ -19,6 +19,7 @@ angular.module('EmailApp')
             EmailFactory.message = response;
             this.message = EmailFactory.message;
             $scope.$parent.email.title = this.message.subject;
+            console.log(response, "response!!!")
           }) );
         }
       },

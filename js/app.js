@@ -1,3 +1,4 @@
+//for some reason, it doesn't like it when I inject ngSanitize
 var EmailApp = angular.module('EmailApp', [
    'ngRoute'
 ]);

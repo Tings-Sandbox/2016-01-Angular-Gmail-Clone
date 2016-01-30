@@ -195,10 +195,50 @@ One of the most powerful Angular Directives is ng-repeat, which iterates over Ob
 </ul>
 
 ----------------------
+WHAT'S GOING ON IN THE APP::
+
+INBOX DIRECTIVE::
+EmailApp.directive('inbox', function(){return ...})
+the second param returns an object with attributes like the controller (where you define the functions available by that controller), the link to its templateUrl, etc.
+
+The controller just references the same functions in our InboxFactory. 
+
+The controller also calls getMessages()
+
+InboxFactory.getMessages()
+          .then( angular.bind( this, function then() {
+             this.messages = InboxFactory.messages;
+          })  );
+
+getMessages from the factory will return the data and update teh InboxFactory.messages. Recall that angular.bind() returns a function where this is bound to the original 'this'.
+
+INBOX FACTORY::
+We may inject the inbox factory into the controller as a dependency. Inbox factory exports the messages array, and useful methods like getMessages. We get message from a file called 'json/emails.json' using $http.get, which is a promise. 
+
+CLICKING THE 'READ' BUTTON
+
+<a href="#" ng-click="inbox.goToMessage(message.id);">
+          Read
+</a>
+
+will eventually call this function
+
+exports.goToMessage = function(id) {
+      if ( angular.isNumber(id) ) {
+        console.log('inbox/email/' + id)
+        $location.path('inbox/email/' + id)
+      }
+    }
+
+which will change the url!! 
+
+
+
+-------------------------
 Screenshot Annotations:
 
 1: you can instantiate ng-app by simply adding the directive itself. 
 
 ----------------------
-TO REVIEW, BECAUSE THEY DID NOT COVER
-the actual template htmls, the behavior in the html, the factorys, and everything associated with Emails. 
+FINAL NOTES
+The Email directive is not loading properly because we cannot inject 

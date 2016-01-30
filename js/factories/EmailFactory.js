@@ -16,6 +16,7 @@ angular.module('EmailApp')
         var deferred = $q.defer();
         $http.get('json/message/' + params.id + '.json')
           .success(function (data) {
+            console.log(data)
             deferred.resolve(data);
           })
           .error(function (data) {
